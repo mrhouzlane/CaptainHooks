@@ -7,3 +7,6 @@
 [submodule "packages/foundry/lib/solidity-bytes-utils"]
 	path = packages/foundry/lib/solidity-bytes-utils
 	url = https://github.com/gnsps/solidity-bytes-utils
+[submodule "packages/foundry/lib/v4-core"]
+	path = packages/foundry/lib/v4-core
+	url = https://github.com/uniswap/v4-core
