@@ -37,6 +37,24 @@ IMPORTANT : Contracts deployed on side chains will have similar ABIs for seemles
 
 ## Technologies Used
 
+### Uniswap 
+
+Uniswap offers seamless integrations for hooks in UniswapV4. This enables us to create custom pools. We have used it [here](). 
+
+### Polygon 
+
+### Coinbase 
+
+### Arbitrum 
+
+### Celo 
+
+### Mantle 
+
+### Linea 
+
+### Gnosis 
+
 ## Deployed Contracts
 
 ### Goerli : 
@@ -53,12 +71,6 @@ IMPORTANT : Contracts deployed on side chains will have similar ABIs for seemles
 
 ### Mumbai :
   
-- [PoolManager]()
-- [UniversalHookFactory]()
-- [UniversalHook]()
-
-### Arbitrum Goerli :
-
 - [PoolManager]()
 - [UniversalHookFactory]()
 - [UniversalHook]()
