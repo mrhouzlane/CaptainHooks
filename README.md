@@ -38,6 +38,10 @@ IMPORTANT : Contracts deployed on side chains will have similar ABIs for seemles
 
 ## Technologies Used
 
+### Scaffold ETH : 
+
+Multichain version of scaffold eth so letting users to try in different networks, (add liquidity, remove liquidity, swap in example ui, how much token in each pool)
+
 ### Uniswap 
 
 Uniswap offers seamless integrations for hooks in UniswapV4. This enables us to create custom pools. We have used it [here](). 
@@ -55,6 +59,7 @@ Uniswap offers seamless integrations for hooks in UniswapV4. This enables us to 
 ### Linea 
 
 ### Gnosis 
+
 
 ## Deployed Contracts
 
