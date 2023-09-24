@@ -13,3 +13,6 @@
 [submodule "packages/foundry/lib/solmate"]
 	path = packages/foundry/lib/solmate
 	url = https://github.com/transmissions11/solmate
+[submodule "packages/foundry/lib/BokkyPooBahsDateTimeLibrary"]
+	path = packages/foundry/lib/BokkyPooBahsDateTimeLibrary
+	url = https://github.com/bokkypoobah/BokkyPooBahsDateTimeLibrary
