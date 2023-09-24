@@ -1,11 +1,27 @@
-//SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: MIT
+
 pragma solidity ^0.8.19;
+
+// WORKING CODE
 
 import "../contracts/YourContract.sol";
 import "./DeployHelpers.s.sol";
+import {PoolManager, IPoolManager} from "../contracts/v4-core/PoolManager.sol";
+import {TokenFixture} from "../test/utils/TokenFixture.sol";
+import {TestERC20} from "../contracts/v4-core/test/TestERC20.sol";
+import {CurrencyLibrary, Currency} from "../contracts/v4-core/types/Currency.sol";
+import {UniversalHookFactory} from "../contracts/UniversalHookFactory.sol";
+import {Router04} from "../contracts/Router04.sol";
+import {UniversalHook} from "../contracts/UniversalHook.sol";
 
-contract DeployScript is ScaffoldETHDeploy {
+contract DeployScript is ScaffoldETHDeploy, TokenFixture {
     error InvalidPrivateKey(string);
+    TestERC20 token0;
+    TestERC20 token1;
+    PoolManager manager;
+    Router04 router;
+    UniversalHookFactory hookFactory;
+    UniversalHook sampleHook;
 
     function run() external {
         uint256 deployerPrivateKey = setupLocalhostEnv();
@@ -14,25 +30,63 @@ contract DeployScript is ScaffoldETHDeploy {
                 "You don't have a deployer account. Make sure you have set DEPLOYER_PRIVATE_KEY in .env or use `yarn generate` to generate a new random account"
             );
         }
-        vm.startBroadcast(deployerPrivateKey);
-        YourContract yourContract = new YourContract(
-            vm.addr(deployerPrivateKey)
-        );
-        console.logString(
-            string.concat(
-                "YourContract deployed at: ",
-                vm.toString(address(yourContract))
-            )
-        );
-        vm.stopBroadcast();
 
-        /**
-         * This function generates the file containing the contracts Abi definitions.
-         * These definitions are used to derive the types needed in the custom scaffold-eth hooks, for example.
-         * This function should be called last.
-         */
+        vm.startBroadcast(deployerPrivateKey);
+
+        initializeTokens();
+
+        token0 = TestERC20(Currency.unwrap(currency0));
+        token1 = TestERC20(Currency.unwrap(currency1));
+
+        deployments.push(Deployment("currency0", address(token0)));
+        deployments.push(Deployment("currency1", address(token1)));
+
+        // deploy manager
+        manager = new PoolManager(500000);
+
+        // deploy hook factory
+        UniversalHookFactory hookFactory = new UniversalHookFactory(
+            PoolManager(manager)
+        );
+        hookFactory.setHashedKey(keccak256(bytes("ETH-NYC")));
+
+        // deploy router
+        router = new Router04(manager);
+
+        // deploy sample hook
+        sampleHook = new UniversalHook(PoolManager(payable(address(0))));
+
+        vm.stopBroadcast();
         exportDeployments();
     }
 
     function test() public {}
 }
+
+// COMMENT OUT BELOW CODE
+
+// import "../contracts/YourContract.sol";
+// import "./DeployHelpers.s.sol";
+// import {PoolManager, IPoolManager} from "v4-core/PoolManager.sol";
+
+// contract DeployScript is ScaffoldETHDeploy {
+//     error InvalidPrivateKey(string);
+//     PoolManager manager;
+
+//     function run() external {
+//         uint256 deployerPrivateKey = setupLocalhostEnv();
+//         if (deployerPrivateKey == 0) {
+//             revert InvalidPrivateKey(
+//                 "You don't have a deployer account. Make sure you have set DEPLOYER_PRIVATE_KEY in .env or use `yarn generate` to generate a new random account"
+//             );
+//         }
+
+//         vm.startBroadcast(deployerPrivateKey);
+
+//         manager = new PoolManager(500000);
+//         vm.stopBroadcast();
+//         exportDeployments();
+//     }
+
+//     function test() public {}
+// }
