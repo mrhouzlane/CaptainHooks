@@ -9,7 +9,6 @@ import {FeeLibrary} from "./libraries/FeeLibrary.sol";
 import {Currency, CurrencyLibrary} from "./types/Currency.sol";
 import {PoolKey} from "./types/PoolKey.sol";
 import {LockDataLibrary} from "./libraries/LockDataLibrary.sol";
-import {NoDelegateCall} from "./NoDelegateCall.sol";
 import {Owned} from "./Owned.sol";
 import {IHooks} from "./interfaces/IHooks.sol";
 import {IDynamicFeeManager} from "./interfaces/IDynamicFeeManager.sol";
@@ -23,7 +22,7 @@ import {PoolId, PoolIdLibrary} from "./types/PoolId.sol";
 import {BalanceDelta} from "./types/BalanceDelta.sol";
 
 /// @notice Holds the state for all pools
-contract PoolManager is IPoolManager, Fees, NoDelegateCall, ERC1155, IERC1155Receiver {
+contract PoolManager is IPoolManager, Fees, ERC1155, IERC1155Receiver {
     using PoolIdLibrary for PoolKey;
     using SafeCast for *;
     using Pool for *;
@@ -44,77 +43,106 @@ contract PoolManager is IPoolManager, Fees, NoDelegateCall, ERC1155, IERC1155Rec
 
     /// @dev Represents the currencies due/owed to each locker.
     /// Must all net to zero when the last lock is released.
-    mapping(address locker => mapping(Currency currency => int256 currencyDelta)) public currencyDelta;
+    mapping(address locker => mapping(Currency currency => int256 currencyDelta))
+        public currencyDelta;
 
     /// @inheritdoc IPoolManager
     mapping(Currency currency => uint256) public override reservesOf;
 
     mapping(PoolId id => Pool.State) public pools;
 
-    constructor(uint256 controllerGasLimit) Fees(controllerGasLimit) ERC1155("") {}
+    constructor(
+        uint256 controllerGasLimit
+    ) Fees(controllerGasLimit) ERC1155("") {}
 
-    function _getPool(PoolKey memory key) private view returns (Pool.State storage) {
+    function _getPool(
+        PoolKey memory key
+    ) private view returns (Pool.State storage) {
         return pools[key.toId()];
     }
 
     /// @inheritdoc IPoolManager
-    function getSlot0(PoolId id)
+    function getSlot0(
+        PoolId id
+    )
         external
         view
         override
-        returns (uint160 sqrtPriceX96, int24 tick, uint24 protocolFees, uint24 hookFees)
+        returns (
+            uint160 sqrtPriceX96,
+            int24 tick,
+            uint24 protocolFees,
+            uint24 hookFees
+        )
     {
         Pool.Slot0 memory slot0 = pools[id].slot0;
 
-        return (slot0.sqrtPriceX96, slot0.tick, slot0.protocolFees, slot0.hookFees);
+        return (
+            slot0.sqrtPriceX96,
+            slot0.tick,
+            slot0.protocolFees,
+            slot0.hookFees
+        );
     }
 
     /// @inheritdoc IPoolManager
-    function getLiquidity(PoolId id) external view override returns (uint128 liquidity) {
+    function getLiquidity(
+        PoolId id
+    ) external view override returns (uint128 liquidity) {
         return pools[id].liquidity;
     }
 
     /// @inheritdoc IPoolManager
-    function getLiquidity(PoolId id, address _owner, int24 tickLower, int24 tickUpper)
-        external
-        view
-        override
-        returns (uint128 liquidity)
-    {
+    function getLiquidity(
+        PoolId id,
+        address _owner,
+        int24 tickLower,
+        int24 tickUpper
+    ) external view override returns (uint128 liquidity) {
         return pools[id].positions.get(_owner, tickLower, tickUpper).liquidity;
     }
 
-    function getPosition(PoolId id, address owner, int24 tickLower, int24 tickUpper)
-        external
-        view
-        override
-        returns (Position.Info memory position)
-    {
+    function getPosition(
+        PoolId id,
+        address owner,
+        int24 tickLower,
+        int24 tickUpper
+    ) external view override returns (Position.Info memory position) {
         return pools[id].positions.get(owner, tickLower, tickUpper);
     }
 
     /// @inheritdoc IPoolManager
-    function getLock(uint256 i) external view override returns (address locker) {
+    function getLock(
+        uint256 i
+    ) external view override returns (address locker) {
         return LockDataLibrary.getLock(i);
     }
 
     /// @inheritdoc IPoolManager
-    function initialize(PoolKey memory key, uint160 sqrtPriceX96, bytes calldata hookData)
-        external
-        override
-        returns (int24 tick)
-    {
+    function initialize(
+        PoolKey memory key,
+        uint160 sqrtPriceX96,
+        bytes calldata hookData
+    ) external override returns (int24 tick) {
         if (key.fee.isStaticFeeTooLarge()) revert FeeTooLarge();
 
         // see TickBitmap.sol for overflow conditions that can arise from tick spacing being too large
         if (key.tickSpacing > MAX_TICK_SPACING) revert TickSpacingTooLarge();
         if (key.tickSpacing < MIN_TICK_SPACING) revert TickSpacingTooSmall();
-        if (key.currency0 > key.currency1) revert CurrenciesInitializedOutOfOrder();
-        if (!key.hooks.isValidHookAddress(key.fee)) revert Hooks.HookAddressNotValid(address(key.hooks));
+        if (key.currency0 > key.currency1)
+            revert CurrenciesInitializedOutOfOrder();
+        if (!key.hooks.isValidHookAddress(key.fee))
+            revert Hooks.HookAddressNotValid(address(key.hooks));
 
         if (key.hooks.shouldCallBeforeInitialize()) {
-            if (key.hooks.beforeInitialize(msg.sender, key, sqrtPriceX96, hookData) != IHooks.beforeInitialize.selector)
-            {
+            if (
+                key.hooks.beforeInitialize(
+                    msg.sender,
+                    key,
+                    sqrtPriceX96,
+                    hookData
+                ) != IHooks.beforeInitialize.selector
+            ) {
                 revert Hooks.InvalidHookResponse();
             }
         }
@@ -126,18 +154,32 @@ contract PoolManager is IPoolManager, Fees, NoDelegateCall, ERC1155, IERC1155Rec
 
         if (key.hooks.shouldCallAfterInitialize()) {
             if (
-                key.hooks.afterInitialize(msg.sender, key, sqrtPriceX96, tick, hookData)
-                    != IHooks.afterInitialize.selector
+                key.hooks.afterInitialize(
+                    msg.sender,
+                    key,
+                    sqrtPriceX96,
+                    tick,
+                    hookData
+                ) != IHooks.afterInitialize.selector
             ) {
                 revert Hooks.InvalidHookResponse();
             }
         }
 
-        emit Initialize(id, key.currency0, key.currency1, key.fee, key.tickSpacing, key.hooks);
+        emit Initialize(
+            id,
+            key.currency0,
+            key.currency1,
+            key.fee,
+            key.tickSpacing,
+            key.hooks
+        );
     }
 
     /// @inheritdoc IPoolManager
-    function lock(bytes calldata data) external override returns (bytes memory result) {
+    function lock(
+        bytes calldata data
+    ) external override returns (bytes memory result) {
         lockData.push(msg.sender);
 
         // the caller does everything in this callback, including paying what they owe via calls to settle
@@ -170,7 +212,10 @@ contract PoolManager is IPoolManager, Fees, NoDelegateCall, ERC1155, IERC1155Rec
     }
 
     /// @dev Accumulates a balance change to a map of currency to balance changes
-    function _accountPoolBalanceDelta(PoolKey memory key, BalanceDelta delta) internal {
+    function _accountPoolBalanceDelta(
+        PoolKey memory key,
+        BalanceDelta delta
+    ) internal {
         _accountDelta(key.currency0, delta.amount0());
         _accountDelta(key.currency1, delta.amount1());
     }
@@ -186,11 +231,15 @@ contract PoolManager is IPoolManager, Fees, NoDelegateCall, ERC1155, IERC1155Rec
         PoolKey memory key,
         IPoolManager.ModifyPositionParams memory params,
         bytes calldata hookData
-    ) external override noDelegateCall onlyByLocker returns (BalanceDelta delta) {
+    ) external override onlyByLocker returns (BalanceDelta delta) {
         if (key.hooks.shouldCallBeforeModifyPosition()) {
             if (
-                key.hooks.beforeModifyPosition(msg.sender, key, params, hookData)
-                    != IHooks.beforeModifyPosition.selector
+                key.hooks.beforeModifyPosition(
+                    msg.sender,
+                    key,
+                    params,
+                    hookData
+                ) != IHooks.beforeModifyPosition.selector
             ) {
                 revert Hooks.InvalidHookResponse();
             }
@@ -212,41 +261,57 @@ contract PoolManager is IPoolManager, Fees, NoDelegateCall, ERC1155, IERC1155Rec
 
         unchecked {
             if (feeAmounts.feeForProtocol0 > 0) {
-                protocolFeesAccrued[key.currency0] += feeAmounts.feeForProtocol0;
+                protocolFeesAccrued[key.currency0] += feeAmounts
+                    .feeForProtocol0;
             }
             if (feeAmounts.feeForProtocol1 > 0) {
-                protocolFeesAccrued[key.currency1] += feeAmounts.feeForProtocol1;
+                protocolFeesAccrued[key.currency1] += feeAmounts
+                    .feeForProtocol1;
             }
             if (feeAmounts.feeForHook0 > 0) {
-                hookFeesAccrued[address(key.hooks)][key.currency0] += feeAmounts.feeForHook0;
+                hookFeesAccrued[address(key.hooks)][key.currency0] += feeAmounts
+                    .feeForHook0;
             }
             if (feeAmounts.feeForHook1 > 0) {
-                hookFeesAccrued[address(key.hooks)][key.currency1] += feeAmounts.feeForHook1;
+                hookFeesAccrued[address(key.hooks)][key.currency1] += feeAmounts
+                    .feeForHook1;
             }
         }
 
         if (key.hooks.shouldCallAfterModifyPosition()) {
             if (
-                key.hooks.afterModifyPosition(msg.sender, key, params, delta, hookData)
-                    != IHooks.afterModifyPosition.selector
+                key.hooks.afterModifyPosition(
+                    msg.sender,
+                    key,
+                    params,
+                    delta,
+                    hookData
+                ) != IHooks.afterModifyPosition.selector
             ) {
                 revert Hooks.InvalidHookResponse();
             }
         }
 
-        emit ModifyPosition(id, msg.sender, params.tickLower, params.tickUpper, params.liquidityDelta);
+        emit ModifyPosition(
+            id,
+            msg.sender,
+            params.tickLower,
+            params.tickUpper,
+            params.liquidityDelta
+        );
     }
 
     /// @inheritdoc IPoolManager
-    function swap(PoolKey memory key, IPoolManager.SwapParams memory params, bytes calldata hookData)
-        external
-        override
-        noDelegateCall
-        onlyByLocker
-        returns (BalanceDelta delta)
-    {
+    function swap(
+        PoolKey memory key,
+        IPoolManager.SwapParams memory params,
+        bytes calldata hookData
+    ) external override onlyByLocker returns (BalanceDelta delta) {
         if (key.hooks.shouldCallBeforeSwap()) {
-            if (key.hooks.beforeSwap(msg.sender, key, params, hookData) != IHooks.beforeSwap.selector) {
+            if (
+                key.hooks.beforeSwap(msg.sender, key, params, hookData) !=
+                IHooks.beforeSwap.selector
+            ) {
                 revert Hooks.InvalidHookResponse();
             }
         }
@@ -254,7 +319,12 @@ contract PoolManager is IPoolManager, Fees, NoDelegateCall, ERC1155, IERC1155Rec
         // Set the total swap fee, either through the hook or as the static fee set an initialization.
         uint24 totalSwapFee;
         if (key.fee.isDynamicFee()) {
-            totalSwapFee = IDynamicFeeManager(address(key.hooks)).getFee(msg.sender, key, params, hookData);
+            totalSwapFee = IDynamicFeeManager(address(key.hooks)).getFee(
+                msg.sender,
+                key,
+                params,
+                hookData
+            );
             if (totalSwapFee >= 1000000) revert FeeTooLarge();
         } else {
             // clear the top 4 bits since they may be flagged for hook fees
@@ -280,15 +350,22 @@ contract PoolManager is IPoolManager, Fees, NoDelegateCall, ERC1155, IERC1155Rec
 
         unchecked {
             if (feeForProtocol > 0) {
-                protocolFeesAccrued[params.zeroForOne ? key.currency0 : key.currency1] += feeForProtocol;
+                protocolFeesAccrued[
+                    params.zeroForOne ? key.currency0 : key.currency1
+                ] += feeForProtocol;
             }
             if (feeForHook > 0) {
-                hookFeesAccrued[address(key.hooks)][params.zeroForOne ? key.currency0 : key.currency1] += feeForHook;
+                hookFeesAccrued[address(key.hooks)][
+                    params.zeroForOne ? key.currency0 : key.currency1
+                ] += feeForHook;
             }
         }
 
         if (key.hooks.shouldCallAfterSwap()) {
-            if (key.hooks.afterSwap(msg.sender, key, params, delta, hookData) != IHooks.afterSwap.selector) {
+            if (
+                key.hooks.afterSwap(msg.sender, key, params, delta, hookData) !=
+                IHooks.afterSwap.selector
+            ) {
                 revert Hooks.InvalidHookResponse();
             }
         }
@@ -306,45 +383,30 @@ contract PoolManager is IPoolManager, Fees, NoDelegateCall, ERC1155, IERC1155Rec
     }
 
     /// @inheritdoc IPoolManager
-    function donate(PoolKey memory key, uint256 amount0, uint256 amount1, bytes calldata hookData)
-        external
-        override
-        noDelegateCall
-        onlyByLocker
-        returns (BalanceDelta delta)
-    {
-        if (key.hooks.shouldCallBeforeDonate()) {
-            if (key.hooks.beforeDonate(msg.sender, key, amount0, amount1, hookData) != IHooks.beforeDonate.selector) {
-                revert Hooks.InvalidHookResponse();
-            }
-        }
-
-        delta = _getPool(key).donate(amount0, amount1);
-
-        _accountPoolBalanceDelta(key, delta);
-
-        if (key.hooks.shouldCallAfterDonate()) {
-            if (key.hooks.afterDonate(msg.sender, key, amount0, amount1, hookData) != IHooks.afterDonate.selector) {
-                revert Hooks.InvalidHookResponse();
-            }
-        }
-    }
-
-    /// @inheritdoc IPoolManager
-    function take(Currency currency, address to, uint256 amount) external override noDelegateCall onlyByLocker {
+    function take(
+        Currency currency,
+        address to,
+        uint256 amount
+    ) external override onlyByLocker {
         _accountDelta(currency, amount.toInt128());
         reservesOf[currency] -= amount;
         currency.transfer(to, amount);
     }
 
     /// @inheritdoc IPoolManager
-    function mint(Currency currency, address to, uint256 amount) external override noDelegateCall onlyByLocker {
+    function mint(
+        Currency currency,
+        address to,
+        uint256 amount
+    ) external override onlyByLocker {
         _accountDelta(currency, amount.toInt128());
         _mint(to, currency.toId(), amount, "");
     }
 
     /// @inheritdoc IPoolManager
-    function settle(Currency currency) external payable override noDelegateCall onlyByLocker returns (uint256 paid) {
+    function settle(
+        Currency currency
+    ) external payable override onlyByLocker returns (uint256 paid) {
         uint256 reservesBefore = reservesOf[currency];
         reservesOf[currency] = currency.balanceOfSelf();
         paid = reservesOf[currency] - reservesBefore;
@@ -357,16 +419,25 @@ contract PoolManager is IPoolManager, Fees, NoDelegateCall, ERC1155, IERC1155Rec
         _accountDelta(currency, -(amount.toInt128()));
     }
 
-    function onERC1155Received(address, address, uint256 id, uint256 value, bytes calldata) external returns (bytes4) {
+    function onERC1155Received(
+        address,
+        address,
+        uint256 id,
+        uint256 value,
+        bytes calldata
+    ) external returns (bytes4) {
         if (msg.sender != address(this)) revert NotPoolManagerToken();
         _burnAndAccount(CurrencyLibrary.fromId(id), value);
         return IERC1155Receiver.onERC1155Received.selector;
     }
 
-    function onERC1155BatchReceived(address, address, uint256[] calldata ids, uint256[] calldata values, bytes calldata)
-        external
-        returns (bytes4)
-    {
+    function onERC1155BatchReceived(
+        address,
+        address,
+        uint256[] calldata ids,
+        uint256[] calldata values,
+        bytes calldata
+    ) external returns (bytes4) {
         if (msg.sender != address(this)) revert NotPoolManagerToken();
         // unchecked to save gas on incrementations of i
         unchecked {
@@ -389,26 +460,6 @@ contract PoolManager is IPoolManager, Fees, NoDelegateCall, ERC1155, IERC1155Rec
         PoolId id = key.toId();
         pools[id].setHookFees(newHookFees);
         emit HookFeeUpdated(id, newHookFees);
-    }
-
-    function extsload(bytes32 slot) external view returns (bytes32 value) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            value := sload(slot)
-        }
-    }
-
-    function extsload(bytes32 startSlot, uint256 nSlots) external view returns (bytes memory) {
-        bytes memory value = new bytes(32 * nSlots);
-
-        /// @solidity memory-safe-assembly
-        assembly {
-            for { let i := 0 } lt(i, nSlots) { i := add(i, 1) } {
-                mstore(add(value, mul(add(i, 1), 32)), sload(add(startSlot, i)))
-            }
-        }
-
-        return value;
     }
 
     /// @notice receive native tokens for native pools
