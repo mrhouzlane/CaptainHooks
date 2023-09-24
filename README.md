@@ -1,5 +1,6 @@
 # Captain Hooks  :  Hooks that enable better TradFi Adoption
 
+<img src="./docs/Logo.png" alt="Image Description" width="200" />
 
 ## TL;DR: 
 
