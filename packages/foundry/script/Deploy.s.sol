@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
 // WORKING CODE
 
@@ -22,6 +22,9 @@ contract DeployScript is ScaffoldETHDeploy, TokenFixture {
     Router04 router;
     UniversalHookFactory hookFactory;
     UniversalHook sampleHook;
+
+    address secondTestWallet =
+        address(0x51f9B9fcBDCb13029779bcaA3fbb34adCcf04BCC);
 
     function run() external {
         uint256 deployerPrivateKey = setupLocalhostEnv();
@@ -55,6 +58,12 @@ contract DeployScript is ScaffoldETHDeploy, TokenFixture {
 
         // deploy sample hook
         sampleHook = new UniversalHook(PoolManager(payable(address(0))));
+
+        // mint tokens
+        token0.mint(vm.addr(deployerPrivateKey), 100000 ether);
+        token0.mint(secondTestWallet, 100000 ether);
+        token1.mint(vm.addr(deployerPrivateKey), 100000 ether);
+        token1.mint(secondTestWallet, 100000 ether);
 
         vm.stopBroadcast();
         exportDeployments();

@@ -3,6 +3,8 @@ import type { NextPage } from "next";
 import { useLocalStorage } from "usehooks-ts";
 import { MetaHeader } from "~~/components/MetaHeader";
 import { ContractUI } from "~~/components/scaffold-eth";
+import { ContractFactoryProductUI } from "~~/components/scaffold-eth/Contract/ContractFactoryProductUI";
+import { FACTORY_CONTRACT_PRODUCT_NAMES } from "~~/constants/contracts";
 import { ContractName } from "~~/utils/scaffold-eth/contract";
 import { getContractNames } from "~~/utils/scaffold-eth/contractNames";
 
@@ -47,13 +49,24 @@ const Debug: NextPage = () => {
                 ))}
               </div>
             )}
-            {contractNames.map(contractName => (
-              <ContractUI
-                key={contractName}
-                contractName={contractName}
-                className={contractName === selectedContract ? "" : "hidden"}
-              />
-            ))}
+            {contractNames.map(contractName => {
+              if (FACTORY_CONTRACT_PRODUCT_NAMES.includes(contractName))
+                return (
+                  <ContractFactoryProductUI
+                    key={contractName}
+                    contractName={contractName}
+                    className={contractName === selectedContract ? "" : "hidden"}
+                  />
+                );
+
+              return (
+                <ContractUI
+                  key={contractName}
+                  contractName={contractName}
+                  className={contractName === selectedContract ? "" : "hidden"}
+                />
+              );
+            })}
           </>
         )}
       </div>

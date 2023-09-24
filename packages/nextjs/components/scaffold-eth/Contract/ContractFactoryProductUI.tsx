@@ -1,15 +1,18 @@
-import { useReducer, useState } from "react";
-import { ContractEvents } from "./ContractEvents";
+import { useReducer } from "react";
 import { ContractReadMethods } from "./ContractReadMethods";
 import { ContractVariables } from "./ContractVariables";
 import { ContractWriteMethods } from "./ContractWriteMethods";
+import { useLocalStorage } from "usehooks-ts";
 import { Spinner } from "~~/components/Spinner";
-import { Address, Balance } from "~~/components/scaffold-eth";
-import { useDeployedContractInfo, useEventWatch, useNetworkColor } from "~~/hooks/scaffold-eth";
-import { getTargetNetwork, notification } from "~~/utils/scaffold-eth";
+import { Address, Balance, InputBase } from "~~/components/scaffold-eth";
+import { useNetworkColor } from "~~/hooks/scaffold-eth";
+import { useFactoryProductContract } from "~~/hooks/scaffold-eth/useFactoryProductContract";
+import { getTargetNetwork } from "~~/utils/scaffold-eth";
 import { ContractName } from "~~/utils/scaffold-eth/contract";
 
-type ContractUIProps = {
+const FACTORY_PRODUCT_KEY = "universalHook.address";
+
+type ContractFactoryProductUIProps = {
   contractName: ContractName;
   className?: string;
 };
@@ -17,23 +20,20 @@ type ContractUIProps = {
 /**
  * UI component to interface with deployed contracts.
  **/
-export const ContractUI = ({ contractName, className = "" }: ContractUIProps) => {
+export const ContractFactoryProductUI = ({ contractName, className = "" }: ContractFactoryProductUIProps) => {
   const [refreshDisplayVariables, triggerRefreshDisplayVariables] = useReducer(value => !value, false);
   const configuredNetwork = getTargetNetwork();
 
-  const { data: deployedContractData, isLoading: deployedContractLoading } = useDeployedContractInfo(contractName);
-  const [eventLogs, setEventLogs] = useState<any[]>([]);
+  const [contractAddress, setContractAddress] = useLocalStorage<string>(
+    FACTORY_PRODUCT_KEY,
+    "0x0165878A594ca255338adfa4d48449f69242Eb8F",
+  );
 
-  useEventWatch({
-    deployedContractData,
-    onEvent: logs => {
-      const eventNames = logs.map((log: { eventName: any }) => log.eventName);
-      notification.info(`Event(s) ${eventNames.join(", ")} emitted`);
-      setEventLogs([...logs]);
-    },
-  });
+  const { data: deployedContractData, isLoading: deployedContractLoading } = useFactoryProductContract(
+    contractName,
+    contractAddress,
+  );
   const networkColor = useNetworkColor();
-
   if (deployedContractLoading) {
     return (
       <div className="mt-14">
@@ -59,9 +59,14 @@ export const ContractUI = ({ contractName, className = "" }: ContractUIProps) =>
               <div className="flex flex-col gap-1">
                 <span className="font-bold">{contractName}</span>
                 <Address address={deployedContractData.address} />
+                <InputBase
+                  value={contractAddress}
+                  placeholder="Search by hash or address"
+                  onChange={addr => setContractAddress(addr)}
+                />
                 <div className="flex gap-1 items-center">
                   <span className="font-bold text-sm">Balance:</span>
-                  <Balance address={deployedContractData.address} className="px-0 h-1.5 min-h-[0.375rem]" />
+                  <Balance address={contractAddress} className="px-0 h-1.5 min-h-[0.375rem]" />
                 </div>
               </div>
             </div>
@@ -71,10 +76,6 @@ export const ContractUI = ({ contractName, className = "" }: ContractUIProps) =>
                 <span style={{ color: networkColor }}>{configuredNetwork.name}</span>
               </p>
             )}
-          </div>
-          <div className="bg-base-300 rounded-3xl px-6 lg:px-8 py-4 shadow-lg shadow-base-300 mb-6">
-            <h2 className="font-semibold">Contract Events</h2>
-            <ContractEvents logs={eventLogs} />
           </div>
           <div className="bg-base-300 rounded-3xl px-6 lg:px-8 py-4 shadow-lg shadow-base-300">
             <ContractVariables

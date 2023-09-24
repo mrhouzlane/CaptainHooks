@@ -14,3 +14,5 @@ export * from "./useTransactor";
 export * from "./useFetchBlocks";
 export * from "./useContractLogs";
 export * from "./useAutoConnect";
+export * from "./useFactoryProductContract";
+export * from "./useEventWatch";
