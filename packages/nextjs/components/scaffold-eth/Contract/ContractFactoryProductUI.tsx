@@ -3,6 +3,7 @@ import { ContractReadMethods } from "./ContractReadMethods";
 import { ContractVariables } from "./ContractVariables";
 import { ContractWriteMethods } from "./ContractWriteMethods";
 import { useLocalStorage } from "usehooks-ts";
+import { useNetwork } from "wagmi";
 import { Spinner } from "~~/components/Spinner";
 import { Address, Balance, InputBase } from "~~/components/scaffold-eth";
 import { useNetworkColor } from "~~/hooks/scaffold-eth";
@@ -21,8 +22,10 @@ type ContractFactoryProductUIProps = {
  * UI component to interface with deployed contracts.
  **/
 export const ContractFactoryProductUI = ({ contractName, className = "" }: ContractFactoryProductUIProps) => {
+  const { chain } = useNetwork();
+  const configuredNetwork = chain ?? getTargetNetwork();
+
   const [refreshDisplayVariables, triggerRefreshDisplayVariables] = useReducer(value => !value, false);
-  const configuredNetwork = getTargetNetwork();
 
   const [contractAddress, setContractAddress] = useLocalStorage<string>(
     FACTORY_PRODUCT_KEY,

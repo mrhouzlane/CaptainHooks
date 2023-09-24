@@ -29,7 +29,7 @@ export const RainbowKitCustomConnectButton = () => {
 
   return (
     <ConnectButton.Custom>
-      {({ account, chain, openConnectModal, mounted }) => {
+      {({ account, chain, openConnectModal, mounted, openChainModal }) => {
         const connected = mounted && account && chain;
         const blockExplorerAddressLink = account
           ? getBlockExplorerAddressLink(getTargetNetwork(), account.address)
@@ -46,7 +46,7 @@ export const RainbowKitCustomConnectButton = () => {
                 );
               }
 
-              if (chain.unsupported || chain.id !== configuredNetwork.id) {
+              if (chain.unsupported) {
                 return (
                   <div className="dropdown dropdown-end">
                     <label tabIndex={0} className="btn btn-error btn-sm dropdown-toggle gap-1">
@@ -84,13 +84,42 @@ export const RainbowKitCustomConnectButton = () => {
               }
 
               return (
-                <div className="px-2 flex justify-end items-center">
+                <div className="px-2 flex justify-end items-center gap-3 dropdown">
                   <div className="flex flex-col items-center mr-1">
                     <Balance address={account.address} className="min-h-0 h-auto" />
-                    <span className="text-xs" style={{ color: networkColor }}>
-                      {chain.name}
-                    </span>
                   </div>
+
+                  <div>
+                    <label
+                      onClick={openChainModal}
+                      className="btn btn-secondary btn-sm pl-0 pr-2 shadow-md gap-0 !h-auto"
+                    >
+                      {chain.hasIcon && (
+                        <div
+                          style={{
+                            background: chain.iconBackground,
+                            width: 28,
+                            height: 28,
+                            borderRadius: 999,
+                            overflow: "hidden",
+                            marginRight: 4,
+                          }}
+                        >
+                          {chain.iconUrl && (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              alt={chain.name ?? "Chain icon"}
+                              src={chain.iconUrl}
+                              style={{ width: 328, height: 28 }}
+                            />
+                          )}
+                        </div>
+                      )}
+                      <span className="ml-2 mr-1">{chain.name}</span>
+                      <ChevronDownIcon className="h-6 w-4 ml-2 sm:ml-0" />
+                    </label>
+                  </div>
+
                   <div className="dropdown dropdown-end leading-3">
                     <label
                       tabIndex={0}

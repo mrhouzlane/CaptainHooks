@@ -3,6 +3,7 @@ import { ContractEvents } from "./ContractEvents";
 import { ContractReadMethods } from "./ContractReadMethods";
 import { ContractVariables } from "./ContractVariables";
 import { ContractWriteMethods } from "./ContractWriteMethods";
+import { useNetwork } from "wagmi";
 import { Spinner } from "~~/components/Spinner";
 import { Address, Balance } from "~~/components/scaffold-eth";
 import { useDeployedContractInfo, useEventWatch, useNetworkColor } from "~~/hooks/scaffold-eth";
@@ -18,10 +19,15 @@ type ContractUIProps = {
  * UI component to interface with deployed contracts.
  **/
 export const ContractUI = ({ contractName, className = "" }: ContractUIProps) => {
-  const [refreshDisplayVariables, triggerRefreshDisplayVariables] = useReducer(value => !value, false);
-  const configuredNetwork = getTargetNetwork();
+  const { chain } = useNetwork();
+  const configuredNetwork = chain ?? getTargetNetwork();
 
-  const { data: deployedContractData, isLoading: deployedContractLoading } = useDeployedContractInfo(contractName);
+  const [refreshDisplayVariables, triggerRefreshDisplayVariables] = useReducer(value => !value, false);
+
+  const { data: deployedContractData, isLoading: deployedContractLoading } = useDeployedContractInfo(
+    contractName,
+    configuredNetwork.id,
+  );
   const [eventLogs, setEventLogs] = useState<any[]>([]);
 
   useEventWatch({
@@ -31,6 +37,7 @@ export const ContractUI = ({ contractName, className = "" }: ContractUIProps) =>
       notification.info(`Event(s) ${eventNames.join(", ")} emitted`);
       setEventLogs([...logs]);
     },
+    chainId: configuredNetwork.id,
   });
   const networkColor = useNetworkColor();
 

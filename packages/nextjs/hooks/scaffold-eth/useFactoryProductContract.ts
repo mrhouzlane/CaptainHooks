@@ -11,19 +11,19 @@ import { Contract, ContractCodeStatus, ContractName, contracts } from "~~/utils/
 export const useFactoryProductContract = <TContractName extends ContractName>(
   contractName: TContractName,
   contractAddress: Address,
+  chainId?: number,
 ) => {
   const isMounted = useIsMounted();
+  const targetNetworkId = chainId ?? scaffoldConfig.targetNetwork.id;
   const deployedContract = useMemo(
     () => ({
-      ...(contracts?.[scaffoldConfig.targetNetwork.id]?.[0]?.contracts?.[
-        contractName as ContractName
-      ] as Contract<TContractName>),
+      ...(contracts?.[targetNetworkId]?.[0]?.contracts?.[contractName as ContractName] as Contract<TContractName>),
       ...{ address: contractAddress },
     }),
-    [contractAddress, contractName],
+    [contractAddress, contractName, targetNetworkId],
   );
   const [status, setStatus] = useState<ContractCodeStatus>(ContractCodeStatus.LOADING);
-  const publicClient = usePublicClient({ chainId: scaffoldConfig.targetNetwork.id });
+  const publicClient = usePublicClient({ chainId: targetNetworkId });
 
   useEffect(() => {
     const checkContractDeployment = async () => {

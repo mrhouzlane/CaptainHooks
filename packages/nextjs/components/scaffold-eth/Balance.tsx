@@ -1,3 +1,4 @@
+import { useNetwork } from "wagmi";
 import { useAccountBalance } from "~~/hooks/scaffold-eth";
 import { getTargetNetwork } from "~~/utils/scaffold-eth";
 
@@ -10,7 +11,8 @@ type TBalanceProps = {
  * Display (ETH & USD) balance of an ETH address.
  */
 export const Balance = ({ address, className = "" }: TBalanceProps) => {
-  const configuredNetwork = getTargetNetwork();
+  const { chain } = useNetwork();
+  const configuredNetwork = chain ?? getTargetNetwork();
   const { balance, price, isError, isLoading, onToggleBalance, isEthBalance } = useAccountBalance(address);
 
   if (!address || isLoading || balance === null) {
@@ -41,11 +43,11 @@ export const Balance = ({ address, className = "" }: TBalanceProps) => {
         {isEthBalance ? (
           <>
             <span>{balance?.toFixed(4)}</span>
-            <span className="text-[0.8em] font-bold ml-1">{configuredNetwork.nativeCurrency.symbol}</span>
+            <span className="font-bold ml-1">{configuredNetwork.nativeCurrency.symbol}</span>
           </>
         ) : (
           <>
-            <span className="text-[0.8em] font-bold mr-1">$</span>
+            <span className="font-bold mr-1">$</span>
             <span>{(balance * price).toFixed(2)}</span>
           </>
         )}

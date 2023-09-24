@@ -9,6 +9,7 @@ import {IPoolManager} from "./v4-core/interfaces/IPoolManager.sol";
 import {BalanceDelta} from "./v4-core/types/BalanceDelta.sol";
 import {PoolKey} from "./v4-core/types/PoolKey.sol";
 import {console} from "forge-std/console.sol";
+import {IUniversalHook} from "./interfaces/IUniversalHook.sol";
 
 contract Router04 is ILockCallback {
     using CurrencyLibrary for Currency;
@@ -76,7 +77,11 @@ contract Router04 is ILockCallback {
     function lockAcquiredSwap(
         CallbackDataSwap memory data
     ) external onlySelf returns (BalanceDelta delta) {
-        delta = manager.swap(data.key, data.params, new bytes(0));
+        delta = manager.swap(
+            data.key,
+            data.params,
+            abi.encode(IUniversalHook.UniversalHookParams(data.sender))
+        );
 
         if (data.params.zeroForOne) {
             if (delta.amount0() > 0) {
@@ -146,7 +151,11 @@ contract Router04 is ILockCallback {
     function lockAcquiredModifyPosition(
         CallbackDataModifyPosition memory data
     ) external onlySelf returns (BalanceDelta delta) {
-        delta = manager.modifyPosition(data.key, data.params, new bytes(0));
+        delta = manager.modifyPosition(
+            data.key,
+            data.params,
+            abi.encode(IUniversalHook.UniversalHookParams(data.sender))
+        );
 
         if (delta.amount0() > 0) {
             if (data.key.currency0.isNative()) {

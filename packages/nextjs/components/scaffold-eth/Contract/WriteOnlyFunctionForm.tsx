@@ -25,14 +25,16 @@ export const WriteOnlyFunctionForm = ({ abiFunction, onChange, contractAddress }
   const [txValue, setTxValue] = useState<string | bigint>("");
   const { chain } = useNetwork();
   const writeTxn = useTransactor();
-  const writeDisabled = !chain || chain?.id !== getTargetNetwork().id;
+  const currentChain = chain ?? getTargetNetwork();
+
+  const writeDisabled = !currentChain;
 
   const {
     data: result,
     isLoading,
     writeAsync,
   } = useContractWrite({
-    chainId: getTargetNetwork().id,
+    chainId: currentChain.id,
     address: contractAddress,
     functionName: abiFunction.name,
     abi: [abiFunction] as Abi,
