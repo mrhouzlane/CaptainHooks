@@ -135,8 +135,8 @@ forge verify-contract \
 
 ### Scroll Sepolia : 
 
-- [PoolManager]()
-- [UniversalHookFactory]()
+- [PoolManager](https://sepolia.scrollscan.dev/address/0xbd07f443f8cc31fc5ee909e02917a0281ca1d7e5)
+- [UniversalHookFactory](https://sepolia.scrollscan.dev/address/0xC021cFE4fDe075E8038217B1911CB0D9406B8A29#code)
 - [UniversalHook]()
 
 ### Mantle Testnet : 
