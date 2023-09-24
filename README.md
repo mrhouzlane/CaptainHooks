@@ -10,22 +10,22 @@ Captain Hooks is a Uniswapv4 tool for banks and institutions, offering custom po
 
 Composed of 4 core smart contracts : 
 
-1. Router04 : 
+1. **Router04** : 
 
 - Interacts with the PoolManager. 
 - Allows executions of operations such as AddLiquidity, RemoveLiquidity and Swap. 
 
-2. Pool Manager : (specific to uniswap v4-core)
+2. **Pool Manager** : (specific to uniswap v4-core)
 
 - Allows to create Pools (storage variables) 
 - When you create these pools you pass the hooks address. 
 
-3. Universal Hook Factory : 
+3. **Universal Hook Factory** : 
 
 - Allows deploying instances of Universal Hook. 
 - Creation of unique Universal Hook with specific salts. 
 
-4. Universal Hook : 
+4. **Universal Hook** : 
 
 - Managing hooks and fees 
 - Each Universal Hook is associated with a distinct salt
